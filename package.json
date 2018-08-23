@@ -1,0 +1,8 @@
+{
+  "name": "p2pchat",
+  "version": "0.1.0",
+  "dependencies": {
+    "dreamtime": "github:chr15m/dreamtime"
+  },
+  "bin": "./index.js"
+}
