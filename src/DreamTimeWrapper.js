@@ -5,7 +5,7 @@ var dreamTime;
 
 
 function send(wires, msg, cb) {
-    room.sendSingle(room.client, msg, cb, wires);
+    dreamTime.client.sendSingle(dreamTime.client, msg, cb, wires);
 }
 
 
