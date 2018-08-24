@@ -36283,7 +36283,7 @@ var dreamTime;
 
 
 function send(wires, msg, cb) {
-    room.sendSingle(room.client, msg, cb, wires);
+    dreamTime.client.sendSingle(dreamTime.client, msg, cb, wires);
 }
 
 
@@ -36603,8 +36603,8 @@ let sendBtn = document.getElementById("sendBtn");
 let inputBox = document.getElementById("msgInput");
 let msgBox = document.getElementById("msgBox");
 
-let helpMessage = " Welcome to P2PChatjs \r\n" +
-    " You need a webrtc compatible browser \r\n";
+let helpMessage = "-> Welcome to P2PChatjs \r\n" +
+    "-> You need a webrtc compatible browser \r\n";
 
 msgBox.value = helpMessage;
 
@@ -36643,7 +36643,7 @@ function onDataRecv() {
     else if (args[0] === "open")
         onJoin();
     else if (args[0] === "hash")
-        writeToMsgBox(" You're logged in as: " + makeReadableName(room.client.fingerprint));
+        writeToMsgBox("-> You're logged in as: " + makeReadableName(room.client.fingerprint));
     else if (args[0] === "peer")
         writeToMsgBox(makeReadableName(args[1]) + " joined");
     else
