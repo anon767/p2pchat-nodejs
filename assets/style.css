@@ -1,7 +1,7 @@
 body {
     background: black url("bg.png") no-repeat;
     background-size: cover;
-    background-position-y: -250px;
+    background-position-y: bottom;
     width: 99%;
     height:100%;
 }
