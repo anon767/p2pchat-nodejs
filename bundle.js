@@ -36603,8 +36603,8 @@ let sendBtn = document.getElementById("sendBtn");
 let inputBox = document.getElementById("msgInput");
 let msgBox = document.getElementById("msgBox");
 
-let helpMessage = "-> Welcome to P2PChatjs \r\n" +
-    "-> You need a webrtc compatible browser \r\n";
+let helpMessage = " Welcome to P2PChatjs \r\n" +
+    " You need a webrtc compatible browser \r\n";
 
 msgBox.value = helpMessage;
 
@@ -36626,6 +36626,14 @@ sendBtn.addEventListener("click", function () {
     }
 });
 
+function writeToMsgBox(msg) {
+    msgBox.value = msgBox.value + msg + "\r\n";
+}
+
+function makeReadableName(fingerprint) {
+    return fingerprint.substr(0, 5);
+}
+
 function onDataRecv() {
     let args = Object.values(arguments);
 
@@ -36635,20 +36643,19 @@ function onDataRecv() {
     else if (args[0] === "open")
         onJoin();
     else if (args[0] === "hash")
-        msgBox.value = msgBox.value + "-> You're logged in as: " + room.client.fingerprint.substr(0, 5);
+        writeToMsgBox(" You're logged in as: " + makeReadableName(room.client.fingerprint));
     else if (args[0] === "peer")
-        msgBox.value = args[1].substr(0, 5) + " joined";
+        writeToMsgBox(makeReadableName(args[1]) + " joined");
     else
-        msgBox.value = msgBox.value + "\r\n" + Object.values(arguments).join(" ");
+        writeToMsgBox(Object.values(arguments).join(" "));
 
 }
 
 function onMessage(msg, fingerprint, wire) {
-
     if (fingerprint !== room.client.fingerprint) {
-        msgBox.value = msgBox.value + "\r\n" + wire.fingerprint.substr(0, 5) + ": " + msg;
+        writeToMsgBox(makeReadableName(wire.fingerprint) + ": " + msg);
     } else {
-        msgBox.value = msgBox.value + "\r\n" + "you: " + msg;
+        writeToMsgBox("you: " + msg);
     }
     msgBox.scrollTop = msgBox.scrollHeight;
 }
@@ -36669,7 +36676,7 @@ function onDisconnect(wire) {
 function onConnect(wire) {
     graph.add({
         id: wire.fingerprint,
-        name: wire.fingerprint.substr(0, 5)
+        name: makeReadableName(wire.fingerprint)
     });
     graph.connect(room.client.fingerprint, wire.fingerprint);
 }
