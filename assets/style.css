@@ -1,11 +1,20 @@
 body {
-    background: bisque;
+    background: black url("bg.png") no-repeat;
+    background-size: cover;
+    background-position-y: -250px;
+    width: 99%;
+    height:100%;
+}
+
+@font-face {
+    font-family: 'Kongtext';
+    src: url('kongtext.ttf') format('truetype');
 }
 
 #bobbles {
     width: 100%;
     position: absolute;
-    margin-top: -100px;
+    margin-top: 50px;
     margin-left: -100px;
 }
 
@@ -19,10 +28,21 @@ body {
 #msgBox {
     background-color: rgba(0, 0, 0, 0.4);
     color: white;
-    font-size:20px;
+    font-size: 20px;
     width: 100%;
+    height: 90vh;
+    font-family: Kongtext, monospace;
+}
+
+#sendBtn {
+    position: absolute;
+    border: 0;
+    margin-right: 5%;
+    background: transparent;
 }
 
 #msgInput {
-    width:50%;
+    width: 75%;
+    border: none;
+    padding: 10px;
 }
