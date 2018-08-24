@@ -18,3 +18,7 @@ comes with two style.css and style02.css
     - Webtorrent
     - webrtc
 - p2p-graph
+
+## Screenshot
+
+![Screenshot](assets/screenie.png "Screenshot")
