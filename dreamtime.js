@@ -46,7 +46,7 @@ function make_client(opts) {
         "seen": [],
         "seenptr": 0,
     };
-    // how many recent messages to detect repeats (rinngbuffer)
+    // how many recent messages to detect repeats (ringbuffer)
     struct.seen.length = 1024;
     // webtorrent client
     struct.torrent_client = opts.torrent_client || new WebTorrent();
@@ -85,6 +85,26 @@ function process_received_packet(client, packet, wire) {
                     w.extended(EXT, packet);
                 }
             });
+            return ["msg", fingerprint_key(packet.k), packet["p"].toString(), wire];
+        } else {
+            debug("ignoring repeat packet");
+        }
+    }
+}
+
+function process_received_packet_single(client, packet, wires) {
+    var verified = nacl.sign.detached.verify(Buffer(packet.k + packet.u + packet.p), new Uint8Array(packet.s), new Uint8Array(packet.k));
+    debug("verified:", verified);
+    debug("packet:", packet);
+    if (verified) {
+        var uid = packet.k + packet.u;
+        // check if this is a repeat packet
+        if (client.seen.indexOf(uid) == -1) {
+            client.seen[client.seenptr] = uid;
+            client.seenptr = (client.seenptr + 1) % client.seen.length;
+            wires.map(function (w) {
+                w.extended(EXT, packet);
+            });
             return ["msg", fingerprint_key(packet.k), packet["p"].toString()];
         } else {
             debug("ignoring repeat packet");
@@ -95,6 +115,15 @@ function process_received_packet(client, packet, wire) {
 function send(client, message, cb) {
     if (client.torrent) {
         var got = process_received_packet(client, make_packet(message, client.keys));
+        if (got) {
+            cb.apply(null, got);
+        }
+    }
+}
+
+function sendSingle(client, message, cb, wires) {
+    if (client.torrent) {
+        var got = process_received_packet_single(client, make_packet(message, client.keys), wires);
         if (got) {
             cb.apply(null, got);
         }
@@ -206,6 +235,7 @@ function connect(room, opts, cb, onConnect) {
     var c = make_client(opts);
     listen(c, room, cb);
     return {
+        "sendSingle": sendSingle,
         "client": c,
         "send": function (msg) {
             send(c, msg, cb);

@@ -1,21 +1,7 @@
-const crypto = require('crypto');
 const dreamtime = require("./dreamtime");
-// Generate Alice's keys...
-const alice = crypto.createDiffieHellman(5);
-const aliceKey = alice.generateKeys();
 
-// Generate Bob's keys...
-const bob = crypto.createDiffieHellman(alice.getPrime(), alice.getGenerator());
-const bobKey = bob.generateKeys();
 
-// Exchange and generate the secret...
-const aliceSecret = alice.computeSecret(bobKey);
-const bobSecret = bob.computeSecret(aliceKey);
-
-// OK
-console.log(aliceSecret.toString('hex'), bobSecret.toString('hex'));
-
-room = dreamtime("my-room-id", {}, onMessage, onConnect);
+room = dreamtime("my-room-id", {}, onDataRecv, onConnect);
 
 let sendBtn = document.getElementById("sendBtn");
 let inputBox = document.getElementById("msgInput");
@@ -25,10 +11,29 @@ sendBtn.addEventListener("click", function () {
     inputBox.value = "";
 });
 
-function onMessage() {
-    msgBox.value = msgBox.value + "\r\n" + Object.values(arguments).join(" ");
+function send(wires, msg, cb) {
+    room.sendSingle(room.client, msg, cb, wires);
+}
+
+function onDataRecv() {
+    let args = Object.values(arguments);
+
+    let firstNotifier = args[0];
+    if (firstNotifier === "msg")
+        onMessage(args[2], args[1], args[3]);
+    else
+        msgBox.value = msgBox.value + "\r\n" + Object.values(arguments).join(" ");
+
+}
+
+function onMessage(msg, fingerprint, wire) {
+    if (fingerprint !== room.client.fingerprint) {
+        msgBox.value = msgBox.value + "\r\n" + wire.fingerprint + ": " + msg;
+    } else {
+        msgBox.value = msgBox.value + "\r\n" + "you: " + msg;
+    }
 }
 
 function onConnect(wire) {
-    console.log(wire + " joined");
+    console.debug(wire + " joined");
 }
