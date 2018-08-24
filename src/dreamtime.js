@@ -8,6 +8,7 @@ var nacl = require('tweetnacl');
 var ripe = require('ripemd160');
 var debug = require('debug')('dreamtime');
 var onConnectCb;
+var onDisconnectCb;
 // check if a string is probably a 32 byte hex representation
 var seedregex = /\b[0-9A-F]{64}\b/gi;
 
@@ -192,6 +193,7 @@ function listen(client, name, cb) {
             });
             if (wire.fingerprint) {
                 cb("left", wire.fingerprint);
+                onDisconnectCb(wire);
                 debug("wires:", client.wires.length);
             }
         });
@@ -226,8 +228,9 @@ function attach_readline_interface(cb) {
 }
 
 // node module interface
-function connect(room, opts, cb, onConnect) {
+function connect(room, opts, cb, onConnect, onDisconnect) {
     onConnectCb = onConnect;
+    onDisconnectCb = onDisconnect;
     if (typeof(opts) == "function") {
         cb = opts;
         opts = {};
