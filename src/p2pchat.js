@@ -41,6 +41,7 @@ sendBtn.addEventListener("click", function () {
 room.on("left", function (wire) {
     graph.disconnect(room.client.fingerprint, wire.fingerprint);
     graph.remove(wire.fingerprint);
+    writeToMsgBox(makeReadableName(wire.fingerprint) + " left");
 });
 
 room.on("login", function () {
