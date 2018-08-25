@@ -36280,20 +36280,56 @@ const dreamtime = require("./dreamtime");
 
 
 var dreamTime;
-
+var observer = [];
 
 function send(wires, msg, cb) {
     dreamTime.client.sendSingle(dreamTime.client, msg, cb, wires);
 }
 
 
-function initialize(channel, onDataReceive, onConnect, onDisconnect) {
+function initialize(channel) {
     dreamTime = dreamtime(channel, {}, onDataReceive, onConnect, onDisconnect);
     return {
         send: send,
         broadCast: dreamTime.send,
-        client: dreamTime.client
+        client: dreamTime.client,
+        on: bind
     };
+}
+
+function emit(identifier, args) {
+    if (observer[identifier]) {
+        observer[identifier].forEach(function (obs) {
+            obs.apply(null, args);
+        });
+    }
+}
+
+function bind(identifier, func) {
+    if (typeof observer[identifier] === "object") {
+        observer[identifier].push(func);
+    } else {
+        observer[identifier] = [func];
+    }
+}
+
+function onDataReceive() {
+    let args = Object.values(arguments);
+    let firstNotifier = args[0];
+    if (firstNotifier === "msg") {
+        emit("msg", [args[2], args[1], args[3]]);
+    } else if (args[0] === "open")
+        emit("open");
+    else if (args[0] === "hash")
+        emit("login");
+}
+
+function onConnect(wire) {
+    emit("join", [wire]);
+}
+
+function onDisconnect(wire) {
+    emit("left", [wire]);
 }
 
 module.exports = initialize;
@@ -36595,7 +36631,7 @@ if (typeof(require) != 'undefined' && require.main == module) {
 }).call(this,require('_process'),require("buffer").Buffer)
 },{"_process":73,"bencode":5,"buffer":25,"debug":32,"fs":20,"minimist":54,"readline":20,"ripemd160":99,"tweetnacl":132,"webtorrent":145}],161:[function(require,module,exports){
 const DreamTimeWrapper = require("./DreamTimeWrapper");
-const room = DreamTimeWrapper("lobby", onDataRecv, onConnect, onDisconnect);
+const room = DreamTimeWrapper("lobby");
 const Graph = require('p2p-graph');
 const graph = new Graph('#bobbles');
 
@@ -36612,6 +36648,13 @@ graph.on('select', function (id) {
     console.log(id + ' selected!')
 });
 
+function writeToMsgBox(msg) {
+    msgBox.value = msgBox.value + msg + "\r\n";
+}
+
+function makeReadableName(fingerprint) {
+    return fingerprint.substr(0, 5);
+}
 
 inputBox.addEventListener("keyup", function (event) {
     event.preventDefault();
@@ -36626,58 +36669,37 @@ sendBtn.addEventListener("click", function () {
     }
 });
 
-function writeToMsgBox(msg) {
-    msgBox.value = msgBox.value + msg + "\r\n";
-}
 
-function makeReadableName(fingerprint) {
-    return fingerprint.substr(0, 5);
-}
+room.on("left", function (wire) {
+    graph.disconnect(room.client.fingerprint, wire.fingerprint);
+    graph.remove(wire.fingerprint);
+});
 
-function onDataRecv() {
-    let args = Object.values(arguments);
+room.on("login", function () {
+    writeToMsgBox("-> You're logged in as: " + makeReadableName(room.client.fingerprint));
+    graph.add({
+        id: room.client.fingerprint,
+        me: true,
+        name: 'You'
+    });
+});
 
-    let firstNotifier = args[0];
-    if (firstNotifier === "msg")
-        onMessage(args[2], args[1], args[3]);
-    else if (args[0] === "open")
-        onJoin();
-    else if (args[0] === "hash")
-        writeToMsgBox("-> You're logged in as: " + makeReadableName(room.client.fingerprint));
-    else if (args[0] === "peer")
-        writeToMsgBox(makeReadableName(args[1]) + " joined");
-    else
-        writeToMsgBox(Object.values(arguments).join(" "));
+room.on("join", function (wire) {
+    graph.add({
+        id: wire.fingerprint,
+        name: makeReadableName(wire.fingerprint)
+    });
+    graph.connect(room.client.fingerprint, wire.fingerprint);
+    writeToMsgBox(makeReadableName(wire.fingerprint) + " joined");
+});
 
-}
-
-function onMessage(msg, fingerprint, wire) {
+room.on("msg", function (msg, fingerprint, wire) {
     if (fingerprint !== room.client.fingerprint) {
         writeToMsgBox(makeReadableName(wire.fingerprint) + ": " + msg);
     } else {
         writeToMsgBox("you: " + msg);
     }
     msgBox.scrollTop = msgBox.scrollHeight;
-}
+});
 
-function onJoin() {
-    graph.add({
-        id: room.client.fingerprint,
-        me: true,
-        name: 'You'
-    });
-}
-
-function onDisconnect(wire) {
-    graph.disconnect(room.client.fingerprint, wire.fingerprint);
-    graph.remove(wire.fingerprint);
-}
-
-function onConnect(wire) {
-    graph.add({
-        id: wire.fingerprint,
-        name: makeReadableName(wire.fingerprint)
-    });
-    graph.connect(room.client.fingerprint, wire.fingerprint);
-}
 },{"./DreamTimeWrapper":159,"p2p-graph":65}]},{},[161]);

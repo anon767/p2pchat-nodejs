@@ -1,5 +1,5 @@
 const DreamTimeWrapper = require("./DreamTimeWrapper");
-const room = DreamTimeWrapper("lobby", onDataRecv, onConnect, onDisconnect);
+const room = DreamTimeWrapper("lobby");
 const Graph = require('p2p-graph');
 const graph = new Graph('#bobbles');
 
@@ -16,6 +16,13 @@ graph.on('select', function (id) {
     console.log(id + ' selected!')
 });
 
+function writeToMsgBox(msg) {
+    msgBox.value = msgBox.value + msg + "\r\n";
+}
+
+function makeReadableName(fingerprint) {
+    return fingerprint.substr(0, 5);
+}
 
 inputBox.addEventListener("keyup", function (event) {
     event.preventDefault();
@@ -30,57 +37,35 @@ sendBtn.addEventListener("click", function () {
     }
 });
 
-function writeToMsgBox(msg) {
-    msgBox.value = msgBox.value + msg + "\r\n";
-}
 
-function makeReadableName(fingerprint) {
-    return fingerprint.substr(0, 5);
-}
+room.on("left", function (wire) {
+    graph.disconnect(room.client.fingerprint, wire.fingerprint);
+    graph.remove(wire.fingerprint);
+});
 
-function onDataRecv() {
-    let args = Object.values(arguments);
+room.on("login", function () {
+    writeToMsgBox("-> You're logged in as: " + makeReadableName(room.client.fingerprint));
+    graph.add({
+        id: room.client.fingerprint,
+        me: true,
+        name: 'You'
+    });
+});
 
-    let firstNotifier = args[0];
-    if (firstNotifier === "msg")
-        onMessage(args[2], args[1], args[3]);
-    else if (args[0] === "open")
-        onJoin();
-    else if (args[0] === "hash")
-        writeToMsgBox("-> You're logged in as: " + makeReadableName(room.client.fingerprint));
-    else if (args[0] === "peer")
-        writeToMsgBox(makeReadableName(args[1]) + " joined");
-    else
-        writeToMsgBox(Object.values(arguments).join(" "));
+room.on("join", function (wire) {
+    graph.add({
+        id: wire.fingerprint,
+        name: makeReadableName(wire.fingerprint)
+    });
+    graph.connect(room.client.fingerprint, wire.fingerprint);
+    writeToMsgBox(makeReadableName(wire.fingerprint) + " joined");
+});
 
-}
-
-function onMessage(msg, fingerprint, wire) {
+room.on("msg", function (msg, fingerprint, wire) {
     if (fingerprint !== room.client.fingerprint) {
         writeToMsgBox(makeReadableName(wire.fingerprint) + ": " + msg);
     } else {
         writeToMsgBox("you: " + msg);
     }
     msgBox.scrollTop = msgBox.scrollHeight;
-}
-
-function onJoin() {
-    graph.add({
-        id: room.client.fingerprint,
-        me: true,
-        name: 'You'
-    });
-}
-
-function onDisconnect(wire) {
-    graph.disconnect(room.client.fingerprint, wire.fingerprint);
-    graph.remove(wire.fingerprint);
-}
-
-function onConnect(wire) {
-    graph.add({
-        id: wire.fingerprint,
-        name: makeReadableName(wire.fingerprint)
-    });
-    graph.connect(room.client.fingerprint, wire.fingerprint);
-}
+});
