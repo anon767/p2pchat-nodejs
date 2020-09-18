@@ -6,7 +6,7 @@ A simple P2P Chat for Javascript (Browser and NodeJS)
 
 Clone and navigate to index.html or at 
 
-http://www.thecout.com/p2pchat
+http://irc.thecout.com/p2pchat/
 
 ## Styles
 
