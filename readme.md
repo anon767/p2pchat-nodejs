@@ -1,10 +1,22 @@
+
+
 # P2PChatjs
 
 A simple P2P Chat for Javascript (Browser and NodeJS)
 
 ## Usage
 
-Clone and navigate to index.html or at 
+Clone the repository and install dependencies:
+```bash
+npm install
+```
+
+Build the client bundle:
+```bash
+npm run watch
+```
+
+Then open `index.html` in your browser, or visit the live demo at:
 
 http://irc.thecout.com/p2pchat/
 
